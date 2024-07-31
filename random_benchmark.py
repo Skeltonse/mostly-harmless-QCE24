@@ -11,14 +11,10 @@ import pickle
 
 '''LOCAL IMPORTS'''
 import functions.laur_poly_fcns as lpf 
-from functions.matrix_inverse import CHEBY_INV_COEFF_ARRAY
 import solvers.Wilson_method as wm
 from simulators.projector_calcs import BUILD_PLIST, Ep_CALL, Ep_PLOT, SU2_CHECK
-from simulators.angle_calcs import PROJ_TO_ANGLE, Wx_TO_R, W_PLOT, PAULI_CHECK, W_CALL, HAAHR_PLOT
 from simulators.qet_sim import COMPLEX_QET_SIM, COMPLEX_QET_SIM2, QET_MMNT
-#from scipy.linalg import expm
 import simulators.matrix_fcns as mf
-import simulators.unitary_calcs as uc
 import parameter_finder as pf
 import functions.random as frand
 
@@ -26,10 +22,10 @@ import functions.random as frand
 inst_tol=10**(-12)
 pathname="random_benchmark.py"
 ifsave=False
-#t_array=np.linspace(1000, 10000, 30, dtype=int)
+device='mac'
+
 t_array=np.array([14, 16, 20], dtype=int)
-#t_array=np.linspace(20, 400, 15, dtype=int)
-#t_array=np.array([1400])
+#t_array=np.linspace(400, 2000, 15, dtype=int)
 
 '''FANCY PREAMBLE TO MAKE BRAKET PACKAGE WORK NICELY'''
 import matplotlib as mpl
@@ -46,10 +42,16 @@ pts=20
 theta=np.linspace(-np.pi,np.pi,pts)
 xdata=np.cos(theta)
 
+
 '''DEFINE PATHS FOR FILES'''
-current_path = os.path.abspath(__file__)
-coeff_path=current_path.replace(pathname, "")
-save_path=os.path.join(coeff_path,"benchmark_data")
+if device=='mac':
+    current_path = os.path.abspath(__file__)
+    coeff_path=current_path.replace(pathname, "")
+    save_path=os.path.join(coeff_path,"benchmark_data/")
+else:
+    current_path = os.path.abspath(__file__)
+    coeff_path=current_path.replace(pathname, "")
+    save_path=os.path.join(coeff_path,"\benchmark_data")
 
 def RANDOM_FCN_CHECK(czlist, szlist, n, data, xdata):
     """
@@ -102,24 +104,13 @@ def RUN_RANDOM_INSTANCES(t_array, ifsave=False):
 
     ###MAIN LOOP###
     for tind, tn in enumerate(t_array):
-        nz=max(10, np.int32(tn/20))
+        nz=min(15, np.int32(tn/20))
         
         tclist, tslist=frand.RAND_JUMBLE_CHEBY_GENERATOR(tn, nz)
         tclist, tslist, tczlist,tszlist, epsiapprox=frand.GET_NORMED(tclist, tslist, tn, subnorm=2)
         #RANDOM_FCN_CHECK(tczlist, tszlist, tn, theta, xdata)
-        #fig, axes = plt.subplots(2, figsize=(12, 8))
         
         Plist, Qlist, E0, a, b, c, d, tDict=pf.PARAMETER_FIND(tczlist, tszlist, tn, theta, epsi=inst_tol, tDict={'nz':nz}, plots=False, axeschoice=axes)
-
-        #gammalist=lpf.LAUR_POLY_BUILD(tDict['gamma'], tn, np.exp(1j*theta))
-        #axes[0].scatter(theta, np.real(lpf.LAUR_POLY_BUILD(c, tn, np.exp(1j*theta))), label='real c')
-        #axes[1].scatter(theta, np.real(lpf.LAUR_POLY_BUILD(d, tn, np.exp(1j*theta))), label='real d')
-        #axes[0].plot(theta, np.imag(lpf.LAUR_POLY_BUILD(c, tn, np.exp(1j*theta))), label='imag c')
-        #axes[1].plot(theta, np.imag(lpf.LAUR_POLY_BUILD(d, tn, np.exp(1j*theta))), label='imag d')
-        #axes[0].plot(theta, np.real(gammalist), label='real gamma')
-        #axes[1].plot(theta, np.imag(gammalist), label='imag gamma')
-        #plt.legend()
-        #plt.show())
         
         times[tind]=tDict['soltime']
         iters[tind]=tDict['solit']
@@ -205,10 +196,7 @@ def NORM_FIT_PLOTS(ns, norms, epsiapprox,ifsave=False):
     axes.set_xlabel(r'$\log_{10}(n)$', fontsize=fsz)
     axes.set_title('Error in QSP Value on a log-log scale')
     
-    #might want to remove this until the bouded error method is implemented:
     axes.plot(np.log10(t_array), np.log10(epsiapprox), label=r'$\epsilon_{approx}$')
-    #axes.text(np.log10(ns[np.int64(len(ns)-1)])/2-np.log10(ns[np.int64(len(ns)-2)])/2, np.log10(alpha[0]*ns[-1] + alpha[1]),fontsize=22)
-    
     plt.legend()
     
     plt.title('Random Polynomials')

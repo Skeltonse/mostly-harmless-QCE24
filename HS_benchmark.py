@@ -12,24 +12,18 @@ import pickle
 
 '''LOCAL IMPORTS'''
 import functions.laur_poly_fcns as lpf 
-from functions.matrix_inverse import CHEBY_INV_COEFF_ARRAY
 import solvers.Wilson_method as wm
 from simulators.projector_calcs import BUILD_PLIST, Ep_CALL, Ep_PLOT, SU2_CHECK
-from simulators.angle_calcs import PROJ_TO_ANGLE, Wx_TO_R, W_PLOT, PAULI_CHECK, W_CALL, HAAHR_PLOT
 from simulators.qet_sim import COMPLEX_QET_SIM, COMPLEX_QET_SIM2, QET_MMNT
 import simulators.matrix_fcns as mf
-import simulators.unitary_calcs as uc
 import parameter_finder as pf
 
 '''SPECIFIED BY THE USER'''
 inst_tol=10**(-14)
-pathname="HS_benchmark.py"
 ifsave=False
 device='mac'
-#t_array=np.sort(np.append(np.array([20, 50, 80, 110, 140, 170,  230]), np.append(np.linspace(200, 1000, 17, endpoint=True, dtype=int), np.array([1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000]))))
-#t_array=np.array([1700, 1800, 1900, 2000])
-#t_array=np.array([20, 50, 80])
-t_array=np.sort(np.append(np.array([20, 50, 80, 110, 140, 170,  230]), np.linspace(200, 1000, 17, endpoint=True, dtype=int)))
+t_array=np.array([20, 50, 80])
+#t_array=np.sort(np.append(np.array([20, 50, 80, 110, 140, 170,  230]), np.linspace(200, 1000, 17, endpoint=True, dtype=int)))
 
 
 '''FANCY PREAMBLE TO MAKE BRAKET PACKAGE WORK NICELY'''
@@ -38,6 +32,7 @@ t_array=np.sort(np.append(np.array([20, 50, 80, 110, 140, 170,  230]), np.linspa
 #plt.rc('text.latex', preamble=r'\usepackage{braket}')
 
 '''DEFINE THE FIGURE AND DOMAIN'''
+pathname="HS_benchmark.py"
 import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
 
@@ -49,9 +44,15 @@ theta=np.linspace(-np.pi,np.pi,pts)
 xdata=np.cos(theta)
 
 '''DEFINE PATHS FOR FILES'''
-current_path = os.path.abspath(__file__)
-coeff_path=current_path.replace(pathname, "")
-save_path=os.path.join(coeff_path,"benchmark_data")
+if device=='mac':
+    current_path = os.path.abspath(__file__)
+    coeff_path=current_path.replace(pathname, "")
+    save_path=os.path.join(coeff_path,"benchmark_data/")
+else:
+    current_path = os.path.abspath(__file__)
+    coeff_path=current_path.replace(pathname, "")
+    save_path=os.path.join(coeff_path,"\benchmark_data")
+
 
 def get_coeffs(filename):
     """
@@ -108,13 +109,13 @@ def HS_FCN_CHECK(czlist, szlist, n, tau, data, xdata, subnorm=1, inst_tol=inst_t
 
     ###PLOT THE APPROXIMATIONS###
     if plots==True:
-        fig, axes = plt.subplots(1, figsize=(18, 18))
-        axes[0].plot(xdata, np.real(fl), marker='.', label=r'$\mathcal{A}_{real}$')  
-        axes[0].plot(xdata, np.real(targetfcn),label=r'$e^{it\lambda}_{real}$', )
-        axes[0].plot(xdata, np.imag(fl), marker='.', label=r'$\mathcal{A}_{imag}$')  
-        axes[0].plot(xdata, np.imag(targetfcn),label=r'$e^{it\lambda}_{imag}$', )
-        axes[0].set_title("verify the approximation is alright")
-        axes[0].legend()
+        fig, axes = plt.subplots(1, figsize=(12, 6))
+        axes.plot(xdata, np.real(fl), marker='.', label=r'$\mathcal{A}_{real}$')  
+        axes.plot(xdata, np.real(targetfcn),label=r'$e^{it\lambda}_{real}$', )
+        axes.plot(xdata, np.imag(fl), marker='.', label=r'$\mathcal{A}_{imag}$')  
+        axes.plot(xdata, np.imag(targetfcn),label=r'$e^{it\lambda}_{imag}$', )
+        axes.set_title("verify the approximation is alright")
+        axes.legend()
         plt.show()
     
     ###CHECK THE PROPERTIES OF EACH FUNCTION AND THE DISTANCE BETWEEN APPROXIMATIONS###
@@ -184,7 +185,7 @@ def RUN_HS_INSTANCES(t_array, ifsave=False, subnorm=1):
     return AllInstDict
 
 
-def HS_INSTANCE_PLOTS(t_array, ns, norms, iters,  ifsave=False, axes=axes, plotobj='NRits', withLSF=False):
+def HS_INSTANCE_PLOTS(t_array, ns, norms, iters,  ifsave=False, plotobj='NRits', withLSF=False):
     """
     Plots each instance against success measures 
     option to plot the number of NR iterations or the solution time on the y-axis (default is NR)
@@ -209,7 +210,6 @@ def HS_INSTANCE_PLOTS(t_array, ns, norms, iters,  ifsave=False, axes=axes, ploto
         alpha=whole_fit[0]
         print('parameter standard deviations for linear fcn', np.sqrt(np.diag(whole_fit[1])))
         axes[0].plot(np.log10(ns), alpha[0]*np.log10(ns) + alpha[1], 'r', label=str(np.around(alpha[0], 2))+r'$\log_{10}(n)$'+str(np.around(alpha[1], 2)))
-        #axes[0].plot(np.log10(ns), alpha[0]*np.log10(ns), 'r', label=str(np.around(alpha[0], 2))+r'$\log_{10}(n)$')
         axes[0].legend()
         
     axes[1].set_xlabel(r'Polynomial degree $n$', fontsize=fsz)
@@ -229,6 +229,5 @@ def HS_INSTANCE_PLOTS(t_array, ns, norms, iters,  ifsave=False, axes=axes, ploto
         plt.show()
     return
 
-AllInstDict=RUN_HS_INSTANCES(t_array)
-print(AllInstDict['norms'])
-HS_INSTANCE_PLOTS(t_array, AllInstDict['norms'], AllInstDict['alldegrees'],iters=AllInstDict['allits'], ifsave=True, withLSF=False)
+#AllInstDict=RUN_HS_INSTANCES(t_array)
+#HS_INSTANCE_PLOTS(t_array, AllInstDict['norms'], AllInstDict['alldegrees'],iters=AllInstDict['allits'], ifsave=True, withLSF=False)
