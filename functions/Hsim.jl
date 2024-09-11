@@ -4,7 +4,7 @@ using SpecialFunctions
 
 ####specify inputs (maybe eventually depreciate)
 epsi=10^(-14) #to match Dong et Al. 21'
-t=1500
+t=3000
 filename="hsim_coeffs_epsi_" * string(epsi) * "_t_" * string(t) * ".csv"
 ifsave=true
 
@@ -36,13 +36,14 @@ function hsim_coeffs(t, epsi, prefact=1/2)
     cheby_even=zeros(Int(2*k+2))
     cheby_odd=zeros(Int(2*k+2))
 
-    cheby_even[1]=prefact*besselj0(t)
     ###build accoridng to (76, 77) in Martyn, may be able to clean up later
     #but forget the factor of 2 bc we just divide it to get the complex coeffs anyways
     for l in range(0, k)
         cheby_even[2*l+1]=prefact*2*(-1)^l*besselj(2*l, t)
         cheby_odd[2*l+2]=prefact*2*(-1)^l*besselj(2*l+1, t)
     end
+    cheby_even[1]=prefact*besselj0(t)
+    
     recip=vcat(reverse(cheby_even[2:end]), vcat(2*cheby_even[1], cheby_even[2:end]))/2
     antirecip=vcat(reverse(cheby_odd[2:end]), vcat(2*cheby_odd[1],cheby_odd[2:end]))/2
     
